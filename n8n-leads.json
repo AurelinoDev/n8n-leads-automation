@@ -1,0 +1,555 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "05e391be-8656-4d10-8d5c-18f80c13e87e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ea89d143-b160-408f-8df0-fd226ca8fd6c",
+              "name": "nicho",
+              "value": "Clinicas de Estética",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "496b07f3-e1b3-41ed-95d8-ef7d0b0d9167",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer $"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-search-preview\",\n  \"web_search_options\": {\n    \"user_location\": {\n      \"type\": \"approximate\",\n      \"approximate\": {\n        \"country\": \"BR\"\n      }\n    },\n    \"search_context_size\": \"high\"\n  },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Você é um assistente de pesquisa.\\n- NÃO crie dados fictícios.\\n- Fontes aceitáveis: sites oficiais da empresa, Receita Federal, EconoData, LinkedIn, etc.\\n- Responda **somente** com os CNPJs do nicho solicitado, sem contexto ou explicações adicionais.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Busque **até 3** CNPJs para o seguinte nicho: {{ $json.nicho }}.\\n Retorne apenas o CNPJ, sem mais informações.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "7b43c7df-1218-41b3-b7e3-806fbc6f78b3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b208cf9-4662-47c2-8466-e89d87ecd5be",
+              "name": "cnpjs",
+              "value": "={{ $json.choices[0].message.content.split( '\\n' ).filter(l => l.trim() !== '') }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "331fff39-2331-4232-99d1-129d481c12eb",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "cnpjs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "2c4099f1-775f-4e25-9210-1b6a3e19f762",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "31098e5b-5069-43c4-9d5f-9bdd380d474e",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        -112
+      ],
+      "id": "13a0ca67-7b76-4b89-9533-c8ce3e0e97b0",
+      "placeholder": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "619a7637-9945-49f3-889b-722851388656",
+              "name": "cnpj",
+              "value": "={{ $json.cnpjs.replace(/\\D/g, \"\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        96
+      ],
+      "id": "67d8d39e-faa8-4845-84ee-157c5ff3e714",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "url": "=https://receitaws.com.br/v1/cnpj/{{ $json.cnpj }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        96
+      ],
+      "id": "51fe3ae8-07d8-40d1-88c1-7165a8d7bb36",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9e5fb92c-4005-49c9-b4dc-92d207acd271",
+              "leftValue": "={{ $json.qsa }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "array",
+                "operation": "lengthGt",
+                "rightType": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1664,
+        96
+      ],
+      "id": "353bca3a-9369-4b04-aead-51a264824421",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ffa84ddf-5704-4228-bd2b-54652bd48925",
+              "name": "socios",
+              "value": "={{ $json[\"qsa\"].map(s => `${s.nome}`).join(', ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1872,
+        0
+      ],
+      "id": "07b0a1a8-d0c6-4b1b-898e-db0604b3ca85",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "50a180fd-95b6-4de5-8c1f-a7a2810417da",
+              "name": "socios",
+              "value": "={{ $json.qsa[0].nome }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1872,
+        192
+      ],
+      "id": "a077001c-dc7a-485a-b4ef-e8c3dc1b6ea6",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y5oGxz40bzkHIRTewAjFw16uy11O0VH2SU4r2z3bXTk",
+          "mode": "list",
+          "cachedResultName": "Fornecedores",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y5oGxz40bzkHIRTewAjFw16uy11O0VH2SU4r2z3bXTk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y5oGxz40bzkHIRTewAjFw16uy11O0VH2SU4r2z3bXTk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nome": "={{ $('HTTP Request1').item.json.nome }}",
+            "CNPJ": "={{ $('HTTP Request1').item.json.cnpj }}",
+            "SÓCIOS": "={{ $json.socios }}",
+            "EMAIL": "={{ $('HTTP Request1').item.json.email }}",
+            "TELEFONE": "={{ $('HTTP Request1').item.json.telefone }}",
+            "ENDEREÇO": "={{ $('HTTP Request1').item.json.logradouro }}{{ $('HTTP Request1').item.json.numero }},{{ $('HTTP Request1').item.json.cep }},{{ $('HTTP Request1').item.json.bairro }},{{ $('HTTP Request1').item.json.municipio }}/{{ $('HTTP Request1').item.json.uf }}",
+            "SITUAÇÃO": "={{ $('HTTP Request1').item.json.situacao }}",
+            "PORTE": "={{ $('HTTP Request1').item.json.porte }}",
+            "CAPITAL": "={{ $('HTTP Request1').item.json.capital_social }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nome",
+              "displayName": "Nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CNPJ",
+              "displayName": "CNPJ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SÓCIOS",
+              "displayName": "SÓCIOS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "EMAIL",
+              "displayName": "EMAIL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TELEFONE",
+              "displayName": "TELEFONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ENDEREÇO",
+              "displayName": "ENDEREÇO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SITUAÇÃO",
+              "displayName": "SITUAÇÃO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "PORTE",
+              "displayName": "PORTE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CAPITAL",
+              "displayName": "CAPITAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2080,
+        96
+      ],
+      "id": "25a3726c-7a6d-4c40-b110-8baba42df49e",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "qjhirzyHguj2YQIK",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e5a473d7-ea31-45a0-9325-4e7354d9d128",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "593c957bd0a42ae25928b077e9bbb26f8a3f25ea16dbc516e0491fd3dab2c44a"
+  },
+  "id": "WId4miKjNvVV5f7a",
+  "tags": []
+}
