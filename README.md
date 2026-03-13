@@ -29,10 +29,10 @@ O fluxo de automação funciona da seguinte forma:
 4. Os dados relevantes são estruturados em campos específicos.
 5. As informações são armazenadas automaticamente em uma planilha do Google Sheets.
 
-![Workflow](images/workflow.png)
+![Workflow](imagens/workflow.png)
 
 ## Resultado na planilha
 
 Após o processamento, os dados coletados são organizados automaticamente na planilha, contendo informações como empresa, CNPJ, sócios e capital social.
 
-![Resultados](images/results.png)
+![Resultados](imagens/results.png)
